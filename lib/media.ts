@@ -1,19 +1,25 @@
 export async function sampleVideo(file: File, report: (text:string, progress:number)=>void) {
-  if (file.size > 150 * 1024 * 1024) throw new Error('Choose a video smaller than 150 MB.');
+  if (file.size > 150 * 1024 * 1024) throw new Error('Choose a file smaller than 150 MB.');
+  const audioOnly=/\.(mp3|wav|m4a|aac|flac|ogg|oga)$/i.test(file.name)||file.type.startsWith('audio/');
   const url=URL.createObjectURL(file); const video=document.createElement('video');
   video.muted=true; video.preload='auto'; video.playsInline=true;
   const wait=(event:string)=>new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>{clean();reject(new Error('This video could not be read. Try an MP4 with H.264 video and AAC audio.'));},15000);const ok=()=>{clean();resolve();};const fail=()=>{clean();reject(new Error('Unsupported video. Try an MP4 with H.264 video and AAC audio.'));};const clean=()=>{clearTimeout(timer);video.removeEventListener(event,ok);video.removeEventListener('error',fail);};video.addEventListener(event,ok,{once:true});video.addEventListener('error',fail,{once:true});});
   try {
-    const ready=wait('loadeddata');video.src=url;await ready;
-    const duration=video.duration;
-    if(!Number.isFinite(duration)||duration<1||duration>480)throw new Error('Choose a music video between 1 second and 8 minutes long.');
-    const canvas=document.createElement('canvas'); canvas.width=640;canvas.height=Math.round(640*video.videoHeight/video.videoWidth);
-    const context=canvas.getContext('2d');if(!context)throw new Error('Your browser cannot read video frames.');
+    let duration=0;
     const frames:{time:number;image:string}[]=[];
-    for(let i=0;i<10;i++){report('Reading video scenes…',10+i*3);const time=duration*(i+.5)/10;const seek=wait('seeked');video.currentTime=time;await seek;context.drawImage(video,0,0,canvas.width,canvas.height);frames.push({time:Math.round(time),image:canvas.toDataURL('image/jpeg',.65)});}
+    if(!audioOnly){
+    const ready=wait('loadeddata');video.src=url;await ready;
+    duration=video.duration;
+    if(!Number.isFinite(duration)||duration<1||duration>480)throw new Error('Choose a music video between 1 second and 8 minutes long.');
+    const canvas=document.createElement('canvas'); const scale=Math.min(1,640/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+    const context=canvas.getContext('2d');if(!context)throw new Error('Your browser cannot read video frames.');
+    for(let i=0;i<10;i++){report('Reading video scenes…',10+i*3);const time=duration*(i+.5)/10;const seek=wait('seeked');video.currentTime=time;await seek;context.drawImage(video,0,0,canvas.width,canvas.height);let quality=.7;let image=canvas.toDataURL('image/jpeg',quality);while(image.length>280000&&quality>.2){quality-=.1;image=canvas.toDataURL('image/jpeg',quality);}if(image.length>300000)throw new Error('A sampled scene is too detailed. Export the video at 1080p and retry.');frames.push({time:Math.round(time),image});}
+    }
     report('Preparing audio samples…',42);
     const audioContext=new AudioContext(); let audio:AudioBuffer;
-    try {audio=await audioContext.decodeAudioData(await file.arrayBuffer());}catch{throw new Error('The audio track could not be read. Export as MP4 with AAC audio, then try again.');}finally{await audioContext.close();}
+    try {audio=await audioContext.decodeAudioData(await file.arrayBuffer());}catch{throw new Error('The audio could not be decoded. Try an MP3, WAV, or M4A file.');}finally{await audioContext.close();}
+    if(audioOnly)duration=audio.duration;
+    if(!Number.isFinite(duration)||duration<1||duration>480)throw new Error('Choose a song between 1 second and 8 minutes long.');
     const rate=16000, segment=Math.min(15,audio.duration/3), count=Math.floor(segment*rate),samples=new Float32Array(count*3);
     const starts=[0,Math.max(0,(audio.duration-segment)/2),Math.max(0,audio.duration-segment)];
     for(let s=0;s<3;s++)for(let i=0;i<count;i++){let value=0;const index=Math.min(audio.length-1,Math.floor((starts[s]+i/rate)*audio.sampleRate));for(let c=0;c<audio.numberOfChannels;c++)value+=audio.getChannelData(c)[index]/audio.numberOfChannels;samples[s*count+i]=value;}
