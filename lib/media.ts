@@ -1,5 +1,5 @@
 export async function sampleVideo(file: File, report: (text:string, progress:number)=>void) {
-  if (file.size > 150 * 1024 * 1024) throw new Error('Choose a file smaller than 150 MB.');
+  if (file.size > 250 * 1024 * 1024) throw new Error('Choose a file smaller than 250 MB.');
   const audioOnly=/\.(mp3|wav|m4a|aac|flac|ogg|oga)$/i.test(file.name)||file.type.startsWith('audio/');
   const url=URL.createObjectURL(file); const video=document.createElement('video');
   video.muted=true; video.preload='auto'; video.playsInline=true;

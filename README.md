@@ -17,7 +17,7 @@ If creating a Web Service manually instead, use Node runtime, the build/start co
 ## Video analysis
 
 - MP4 with H.264 video and AAC audio is the recommended format. MOV/WebM support depends on browser codecs.
-- Limit: 150 MB and 8 minutes.
+- Limit: 250 MB and 8 minutes.
 - Samples 10 evenly spaced frames and up to 45 seconds of audio (start/middle/end); it does not analyze every frame or the complete soundtrack.
 - The browser prepares media samples; those samples and supplied release details are sent to OpenAI through the server. Artist/song search terms may also be sent to Google's YouTube autocomplete service to collect discovery phrases.
 - No videos or generated results are saved by this app. Copy/export before refreshing.
