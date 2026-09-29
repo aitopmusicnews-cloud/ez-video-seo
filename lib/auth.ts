@@ -1,0 +1,8 @@
+import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
+const name='ezvideo_session';
+function secret(){return process.env.APP_PASSWORD||'';}
+export function passwordMatches(value:string){const stored=secret();if(!stored||stored.length<16)return false;const a=createHmac('sha256',stored).update(value).digest();const b=createHmac('sha256',stored).update(stored).digest();return timingSafeEqual(a,b);}
+export function createSession(){const exp=Date.now()+7*86400000;const payload=`${exp}.${randomBytes(16).toString('hex')}`;return `${payload}.${createHmac('sha256',secret()).update(payload).digest('hex')}`;}
+export function authenticated(request:Request){if(secret().length<16)return false;const token=(request.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(name+'='))?.slice(name.length+1);if(!token)return false;const [exp,nonce,signature,...extra]=token.split('.');if(extra.length||!/^\d+$/.test(exp)||Number(exp)<Date.now()||!/^\w{32}$/.test(nonce)||!/^\w{64}$/.test(signature))return false;const expected=createHmac('sha256',secret()).update(`${exp}.${nonce}`).digest();const provided=Buffer.from(signature,'hex');return provided.length===expected.length&&timingSafeEqual(provided,expected);}
+export function sessionCookie(token:string,maxAge=604800){return `${name}=${token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${maxAge}${process.env.NODE_ENV==='production'?'; Secure':''}`;}
+export function sameOrigin(request:Request){const origin=request.headers.get('origin');if(!origin)return false;try{const url=new URL(origin);const host=request.headers.get('host');return url.host===host&&(url.protocol==='https:'||(process.env.NODE_ENV!=='production'&&url.protocol==='http:'));}catch{return false;}}

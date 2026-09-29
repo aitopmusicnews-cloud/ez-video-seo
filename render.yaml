@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ez-video-seo
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: APP_PASSWORD
+        generateValue: true
