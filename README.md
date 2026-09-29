@@ -1,6 +1,6 @@
 # EZ Video SEO — Render edition
 
-Upload a music video to create three YouTube title options, an editable description, keywords, and hashtags. Copy or export the result as text.
+Upload a song or music video to create three YouTube title options, an editable description, keywords, hashtags, and live YouTube autocomplete discovery signals when available. Copy or export the result as text.
 
 ## Deploy on Render
 
@@ -19,9 +19,9 @@ If creating a Web Service manually instead, use Node runtime, the build/start co
 - MP4 with H.264 video and AAC audio is the recommended format. MOV/WebM support depends on browser codecs.
 - Limit: 150 MB and 8 minutes.
 - Samples 10 evenly spaced frames and up to 45 seconds of audio (start/middle/end); it does not analyze every frame or the complete soundtrack.
-- The browser prepares samples; only those samples and supplied release details are sent to OpenAI through the server.
+- The browser prepares media samples; those samples and supplied release details are sent to OpenAI through the server. Artist/song search terms may also be sent to Google's YouTube autocomplete service to collect discovery phrases.
 - No videos or generated results are saved by this app. Copy/export before refreshing.
-- Keywords are based on content, not live search-volume data. No ranking guarantees.
+- Keywords combine content analysis with live YouTube autocomplete suggestions when artist/song details are available. Autocomplete helps reveal current search phrasing; it is not an exact search-volume metric and does not guarantee rankings.
 - Only one analysis runs at a time. API errors and missing settings are shown in the interface.
 
 ## Security and operation
